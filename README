@@ -1,0 +1,29 @@
+Molecular Electronic Devices Generator
+
+1. Installation of libraries in the OS.In Ubuntu you can install it with the command:
+apt install libcairo-dev
+
+2. Installation of python packages
+pip install rdkit cairocffi cairosvg matplotlib
+
+How to use the code:
+usage: gen_contacts.py [-h] (-m MOLECULE | -d DATASET) [-n NUMBER] [-p PLT]
+gen_contacts.py: error: one of the arguments -m/--molecule -d/--dataset is required
+
+Calculate the contacts of the first 10 molecules in the COMPAS dataset and
+plot them to svgs:
+python3 gen_contacts.py -n 10 -p True DATASETS/COMPAS-1D.csv
+
+Calculate the contacts of the whole COMPAS dataset:
+python3 gen_contacts.py DATASETS/COMPAS-1D.csv
+
+
+Calculate the transmission curves of a specific molecule specified via smiles
+string and generate png files with the contacts, the transmission curves and a
+complete plot of the molecule with the contacts side-by-side with the
+transmission curve. The complete plots are named
+smiles_lccc_rccc_complete.png, where smiles is the smiles string of the
+molecule, lccc and rccc are the value of the left and
+right contacts, respectively. Example with benzene:
+
+python3 gen_contacts.py -m c1ccccc1
