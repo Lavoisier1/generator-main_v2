@@ -27,3 +27,11 @@ molecule, lccc and rccc are the value of the left and
 right contacts, respectively. Example with benzene:
 
 python3 gen_contacts.py -m c1ccccc1
+
+Filter a dataset to keep only planar molecules using xyz coordinates::
+
+    python3 db_filter.py INPUT.csv OUTPUT.csv XYZ_DIRECTORY DELTA_Z_THRESHOLD [N]
+
+``DELTA_Z_THRESHOLD`` is the maximum allowed distance between the highest and
+lowest atom along the plane-normal after alignment. ``N`` optionally limits the
+number of molecules processed.

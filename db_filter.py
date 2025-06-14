@@ -1,49 +1,91 @@
 import sys
-from rdkit import Chem
-from rdkit.Chem import AllChem, rdMolDescriptors
+import os
 import pandas as pd
+import numpy as np
 
-def is_planar(smiles):
-    mol = Chem.MolFromSmiles(smiles)
-    mol_hs = AllChem.AddHs(mol)
-    AllChem.EmbedMolecule(mol_hs, useRandomCoords=True, maxAttempts=1000)
-    try:
-        AllChem.MMFFOptimizeMolecule(mol_hs)
 
-        try:
-            pbf = rdMolDescriptors.CalcPBF(mol_hs)
-        except Exception:
-            return False
+def delta_z_from_xyz(path):
+    """Return the z range of the molecule after PCA alignment.
 
-        # Check if the molecule is planar and print the result
-        if pbf < 1.:
-            print(f"Molecule {smiles} is planar. PBF={pbf}")
-            return True
-        else:
-            print(f"Molecule {smiles} is NOT planar. PBF={pbf}")
-            return False
-    except Exception:
+    Parameters
+    ----------
+    path : str
+        Path to the ``.xyz`` file describing the molecule.
+
+    Returns
+    -------
+    float
+        Difference between maximum and minimum z coordinate after
+        aligning the molecule's principal plane to ``xy``.
+    """
+
+    with open(path) as f:
+        lines = f.read().strip().splitlines()
+
+    if len(lines) < 3:
+        raise ValueError(f"{path} does not look like a valid xyz file")
+
+    coords = []
+    for line in lines[2:]:
+        parts = line.split()
+        if len(parts) < 4:
+            continue
+        coords.append([float(parts[1]), float(parts[2]), float(parts[3])])
+
+    coords = np.array(coords, dtype=float)
+
+    # Center the coordinates
+    coords -= coords.mean(axis=0)
+
+    # PCA to obtain the principal axes
+    _, _, vh = np.linalg.svd(coords, full_matrices=False)
+    normal = vh[2]
+
+    z_coords = coords.dot(normal)
+    return z_coords.max() - z_coords.min()
+
+
+def is_planar(molecule_name, xyz_dir, threshold):
+    """Return ``True`` if the molecule is planar within ``threshold``."""
+
+    xyz_path = os.path.join(xyz_dir, f"{molecule_name}.xyz")
+    if not os.path.isfile(xyz_path):
+        print(f"XYZ file not found for {molecule_name}: {xyz_path}")
         return False
 
+    try:
+        dz = delta_z_from_xyz(xyz_path)
+    except Exception as exc:
+        print(f"Failed to analyse {xyz_path}: {exc}")
+        return False
 
-# Path to your CSV file
-csv_path = sys.argv[1]
-# Path to the output CSV file
-output_csv_path = sys.argv[2]
+    print(f"Molecule {molecule_name} delta_z={dz:.3f}")
+    return dz <= threshold
 
-# Number of molecules to calculate
-num_mols = None
-if len(sys.argv) == 4:
-    num_mols = int(sys.argv[3])
+def main():
+    """Filter molecules of ``csv_path`` based on planarity."""
 
-# Read the CSV file
-df = pd.read_csv(csv_path)
-if num_mols:
-    df = df.head(num_mols).copy()
+    if len(sys.argv) < 5:
+        print(
+            "Usage: python db_filter.py <input.csv> <output.csv> <xyz_dir> <delta_z_threshold> [num]"
+        )
+        sys.exit(1)
 
-# Apply the function and filter the DataFrame
-filtered_df = df[df['smiles'].apply(is_planar)]
+    csv_path = sys.argv[1]
+    output_csv_path = sys.argv[2]
+    xyz_dir = sys.argv[3]
+    threshold = float(sys.argv[4])
 
-# Save the filtered DataFrame to a new CSV file
-filtered_df.to_csv(output_csv_path, index=False)
+    num_mols = int(sys.argv[5]) if len(sys.argv) > 5 else None
+
+    df = pd.read_csv(csv_path)
+    if num_mols:
+        df = df.head(num_mols).copy()
+
+    filtered_df = df[df["molecule"].apply(lambda m: is_planar(m, xyz_dir, threshold))]
+    filtered_df.to_csv(output_csv_path, index=False)
+
+
+if __name__ == "__main__":
+    main()
 
