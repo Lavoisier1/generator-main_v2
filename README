@@ -7,15 +7,23 @@ apt install libcairo-dev
 pip install rdkit cairocffi cairosvg matplotlib
 
 How to use the code:
-usage: gen_contacts.py [-h] (-m MOLECULE | -d DATASET) [-n NUMBER] [-p PLT]
-gen_contacts.py: error: one of the arguments -m/--molecule -d/--dataset is required
+    usage: gen_contacts.py [-h] (-m MOLECULE | -d DATASET) [-n NUMBER] [-p PLT]
+    gen_contacts.py: error: one of the arguments -m/--molecule -d/--dataset is required
 
 Calculate the contacts of the first 10 molecules in the COMPAS dataset and
 plot them to svgs:
-python3 gen_contacts.py -n 10 -p True DATASETS/COMPAS-1D.csv
+    python3 gen_contacts.py -n 10 -p True DATASETS/COMPAS-1D.csv
 
 Calculate the contacts of the whole COMPAS dataset:
 python3 gen_contacts.py DATASETS/COMPAS-1D.csv
+
+*** Filter a dataset to keep only planar molecules using xyz coordinates ***
+
+    python3 db_filter.py INPUT.csv OUTPUT.csv XYZ_DIRECTORY DELTA_Z_THRESHOLD [N]
+
+        ``DELTA_Z_THRESHOLD`` is the maximum allowed distance between the highest and
+        lowest atom along the plane-normal after alignment. ``N`` optionally limits the
+        number of molecules processed.
 
 
 Calculate the transmission curves of a specific molecule specified via smiles
@@ -28,10 +36,4 @@ right contacts, respectively. Example with benzene:
 
 python3 gen_contacts.py -m c1ccccc1
 
-Filter a dataset to keep only planar molecules using xyz coordinates::
 
-    python3 db_filter.py INPUT.csv OUTPUT.csv XYZ_DIRECTORY DELTA_Z_THRESHOLD [N]
-
-``DELTA_Z_THRESHOLD`` is the maximum allowed distance between the highest and
-lowest atom along the plane-normal after alignment. ``N`` optionally limits the
-number of molecules processed.
