@@ -11,7 +11,7 @@ module load rdkit
 virtualenv --no-download $SLURM_TMPDIR GaUDI_env
 source $SLURM_TMPDIR/GaUDI_env/bin/activate
 pip install --no-index --upgrade pip
-pip install --no-index -r /home/agiguere/projects/def-agiguere/requirement/requirements_gaudi.txt
+pip install --no-index -r /home/agiguere/projects/def-agiguere/Data/requirement/requirements_gaudi.txt
 pip install --no-index cairocffi cairosvg
 
 mkdir DATASETS
