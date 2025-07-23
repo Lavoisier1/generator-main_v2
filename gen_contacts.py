@@ -442,42 +442,27 @@ def main():
 
         result_series = df.apply(lambda row: calculate_row_transmission(row=row, max_workers=36), axis=1)
 
-        # result_series = [(energies, transmissions), ...]
-        contacts = []
-        transmissions = []
-        for result in result_series:
-            contacts_row = result[0]
-            contacts.append(contacts_row)
-            transmissions_row = result[1]
-            transmissions.append(transmissions_row)
+        contacts_per_row = [res[0] for res in result_series]
+        transmissions_per_row = [res[1] for res in result_series]
 
-        contacts = [result[0] for result in result_series]
-        transmissions = [result[1] for result in result_series]
+        daughter_rows = []
+        for idx, row in df.iterrows():
+            parent_name = row['molecule']
+            row_contacts = contacts_per_row[idx]
+            row_transmissions = transmissions_per_row[idx]
 
-        """
-        contacts = [
-                    [(contact 1, contact 2), (contact 3, contact 4), ...], #  contacts of molecule 1
-                      .
-                      .
-                      .
-                    [(contact 1, contact 2), (contact 3, contact 4), ...], #  contacts of molecule n
-        ]
+            for pair_idx, contact_pair in enumerate(row_contacts):
+                energies, transmissions = row_transmissions[pair_idx]
+                te_list = list(zip(transmissions, energies))
 
-        transmissions = [
-                            [(energies, transmissions), ...], # energies and transmissions of contacts 1 and 2 of molecule 1
-                            .
-                            .
-                            .
-                            [(energies, transmissions), ...], # energies and transmissions of contacts 1 and 2 of molecule n
-        ]
+                new_row = row.copy()
+                new_row['daughter_id'] = f"{parent_name}_{pair_idx + 1}"
+                new_row['contact'] = contact_pair
+                new_row['T(E)'] = te_list
+                daughter_rows.append(new_row)
 
-        Note that energies and transmissions are lists.
-        """
-
-        df['contacts'] = contacts
-        df['transmissions'] = transmissions
-
-        df.to_csv('DATASETS/MODIFIED_COMPAS-1D.csv', index=False)
+        result_df = pd.DataFrame(daughter_rows)
+        result_df.to_csv('DATASETS/MODIFIED_COMPAS-1D.csv', index=False)
 
     elif args.molecule:
         # Work out a single molecule
